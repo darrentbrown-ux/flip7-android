@@ -44,7 +44,9 @@ body {
 #setup-screen {
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding: clamp(1rem, 3vh, 2.5rem) 1rem clamp(1.5rem, 3vh, 2.5rem);
   background: radial-gradient(ellipse at center, #1a4030 0%, #0d2116 70%);
 }
 .logo {
@@ -126,6 +128,9 @@ body {
   flex-direction: column;
   min-height: 0;
 }
+/* Give human zone more height on short screens — opponents compress, human gets breathing room */
+.zone-opponents { flex: 1; min-height: 0; }
+.zone-human { flex: 0 0 auto; min-height: min(55vh, 280px); }
 .zone-opponents {
   flex: 1;
   display: flex;
@@ -263,16 +268,18 @@ body {
 .human-status { font-size: clamp(0.8rem, 1vw, 1rem); }
 
 .human-cards-row {
-  display: flex; gap: clamp(8px, 1.5vw, 24px);
+  display: flex; gap: clamp(6px, 1vw, 16px);
   align-items: flex-start; flex: 1; min-height: 0;
+  overflow: hidden;
 }
-.hand-section { display: flex; flex-direction: column; min-width: 0; }
+.hand-section { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .hand-section label {
-  font-size: clamp(0.6rem, 0.75vw, 0.8rem); color: var(--muted);
+  font-size: clamp(0.55rem, 0.75vw, 0.8rem); color: var(--muted);
   text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hand-section .hand { justify-content: center; flex: 1; }
-.hand-section.grow { flex: 1; }
+.hand-section .hand { justify-content: flex-start; flex: 1; }
+.hand-section.grow { flex: 1; min-width: 0; }
 
 .actions-row {
   display: flex; gap: clamp(0.5rem, 1vw, 1rem); align-items: center; flex-wrap: wrap;
@@ -302,7 +309,7 @@ body {
   display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0;
 }
 .deck-card-display {
-  width: var(--card-w); height: var(--card-h);
+  width: var(--card-sm-w); height: var(--card-sm-h);
   border-radius: clamp(5px, 0.6vw, 10px);
   border: 2px solid var(--card-border);
   background: #1a4a2a; overflow: hidden;
@@ -1402,22 +1409,23 @@ function renderHuman(player) {
   deckZone.appendChild(dcnt);
 
   cardsRow.appendChild(numSec);
-  cardsRow.appendChild(deckZone);
-  area.appendChild(cardsRow);
 
-  // Bonus / special below the main hand
+  // Bonus / special — in the cards row as a column if present
   if (player.bonusCards.length > 0) {
     const bonRow = document.createElement('div');
     bonRow.className = 'hand-section';
     bonRow.style.flexShrink = '0';
-    bonRow.innerHTML = `<label>Bonus / Special</label>`;
+    bonRow.innerHTML = `<label>Bonus</label>`;
     const bonHand = document.createElement('div');
     bonHand.className = 'hand';
-    bonHand.style.justifyContent = 'center';
+    bonHand.style.justifyContent = 'flex-start';
     for (const c of player.bonusCards) bonHand.appendChild(cardEl(c, 'sm'));
     bonRow.appendChild(bonHand);
-    area.appendChild(bonRow);
+    cardsRow.appendChild(bonRow);
   }
+
+  cardsRow.appendChild(deckZone);
+  area.appendChild(cardsRow);
 
   // Show Freeze/FlipThree cards received this round
   if (player.receivedActions && player.receivedActions.length > 0) {
