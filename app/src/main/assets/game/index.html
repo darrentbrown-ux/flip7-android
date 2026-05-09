@@ -44,9 +44,7 @@ body {
 #setup-screen {
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  overflow-y: auto;
-  padding: clamp(1rem, 3vh, 2.5rem) 1rem clamp(1.5rem, 3vh, 2.5rem);
+  justify-content: center;
   background: radial-gradient(ellipse at center, #1a4030 0%, #0d2116 70%);
 }
 .logo {
@@ -278,7 +276,7 @@ body {
   text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; flex-shrink: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hand-section .hand { justify-content: flex-start; flex: 1; }
+.hand-section .hand { justify-content: center; flex: 1; }
 .hand-section.grow { flex: 1; min-width: 0; }
 
 .actions-row {
@@ -449,10 +447,8 @@ body {
 
 <!-- SETUP SCREEN -->
 <div id="setup-screen" class="screen active">
-  <div class="logo">FLIP 7</div>
-  <div class="logo-sub">Race to 200 points</div>
   <div class="setup-box">
-    <h2>Game Setup</h2>
+    <h2>Flip 7</h2>
     <div class="player-count-row">
       <label>Number of Players</label>
       <div class="count-btns">
@@ -1479,9 +1475,12 @@ function renderGame() {
   oppZone.innerHTML = '';
   humZone.innerHTML = '';
 
-  // Always show human player at bottom; if no human, show current player at bottom
+  // Show the active human at bottom. If current player is human, use them.
+  // Otherwise fall back to first human (so their cards stay visible while AI runs).
+  const currentPlayer = G.players[G.currentIdx];
   const humanIdx = G.players.findIndex(p => p.type === 'human');
-  const mainIdx = humanIdx !== -1 ? humanIdx : G.currentIdx;
+  const mainIdx = currentPlayer.type === 'human' ? G.currentIdx
+                : humanIdx !== -1 ? humanIdx : G.currentIdx;
 
   for (let i = 0; i < G.players.length; i++) {
     if (i !== mainIdx) oppZone.appendChild(renderOpponent(G.players[i]));
