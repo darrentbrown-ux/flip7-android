@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip 7</title>
+<style>
+:root {
+  --bg: #0d2116;
+  --panel: rgba(0,0,0,0.35);
+  --gold: #f5c842;
+  --gold2: #d4a017;
+  --red: #c0392b;
+  --blue: #2980b9;
+  --green: #27ae60;
+  --purple: #8e44ad;
+  --text: #f0ead6;
+  --muted: #9bb8a0;
+  --card-bg: #fffdf0;
+  --card-border: #c8a951;
+  --radius: 10px;
+  /* Cards scale with viewport — doubled base sizes */
+  --card-w: clamp(90px, 8vw, 160px);
+  --card-h: clamp(135px, 12vw, 240px);
+  --card-sm-w: clamp(64px, 5.5vw, 110px);
+  --card-sm-h: clamp(96px, 8.25vw, 165px);
+  --card-xs-w: clamp(48px, 4vw, 80px);
+  --card-xs-h: clamp(72px, 6vw, 120px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: clamp(12px, 1.1vw, 16px);
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; width: 100vw; height: 100vh; }
+.screen.active { display: flex; }
+
+/* ===== SETUP SCREEN ===== */
+#setup-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a4030 0%, #0d2116 70%);
+}
+.logo {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(245,200,66,0.5), 3px 3px 0 var(--gold2);
+  letter-spacing: 4px;
+  margin-bottom: 0.25rem;
+}
+.logo-sub { font-size: 1rem; color: var(--muted); margin-bottom: 2rem; }
+.setup-box {
+  background: var(--panel);
+  border: 1px solid rgba(245,200,66,0.2);
+  border-radius: var(--radius);
+  padding: clamp(1.25rem, 2vw, 2rem);
+  width: clamp(340px, 35vw, 520px);
+}
+.setup-box h2 { color: var(--gold); margin-bottom: 1.5rem; text-align: center; font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; }
+.player-count-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.player-count-row label { color: var(--muted); }
+.count-btns { display: flex; gap: 0.5rem; }
+.count-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid var(--gold2); background: transparent;
+  color: var(--text); font-size: 1.1rem; cursor: pointer; transition: all 0.15s;
+}
+.count-btn.active { background: var(--gold); color: #1a1a1a; border-color: var(--gold); font-weight: 700; }
+.players-config { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+.player-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: rgba(255,255,255,0.05); border-radius: 8px; padding: 0.6rem 0.75rem;
+}
+.player-row .pnum {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+}
+.player-row .pname-input {
+  flex: 1; background: transparent; border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  color: var(--text); font-size: 0.95rem; padding: 2px 4px; min-width: 0;
+}
+.player-row .pname-input:focus { outline: none; border-bottom-color: var(--gold); }
+.player-row select {
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; color: var(--text); padding: 4px 6px; font-size: 0.85rem; cursor: pointer;
+}
+.btn-start {
+  width: 100%; padding: 0.9rem; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #1a1a1a; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+  letter-spacing: 1px; transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-start:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,200,66,0.4); }
+
+/* ===== GAME SCREEN ===== */
+#game-screen { flex-direction: column; }
+.game-header {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.4rem 1rem;
+  background: rgba(0,0,0,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0; height: clamp(36px, 3.5vh, 52px);
+}
+.round-info { color: var(--gold); font-weight: 700; font-size: 1rem; white-space: nowrap; }
+.game-log-header { flex: 1; font-size: 0.8rem; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-menu {
+  padding: 0.25rem 0.75rem;
+  background: transparent; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 0.8rem; white-space: nowrap;
+}
+.btn-menu:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+/* ===== GAME BODY: even split ===== */
+.game-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.zone-opponents {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: clamp(6px, 0.75vw, 14px);
+  padding: clamp(6px, 0.75vw, 14px);
+  min-height: 0;
+  overflow: hidden;
+}
+.zone-human {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(6px, 0.75vw, 14px);
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  min-height: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+}
+.zone-human.busted { background: rgba(192,57,43,0.15); border-color: rgba(192,57,43,0.4); }
+.zone-human.stayed { background: rgba(39,174,96,0.1); border-color: rgba(39,174,96,0.3); }
+.zone-human.frozen { background: rgba(41,128,185,0.1); border-color: rgba(41,128,185,0.4); }
+.zone-human.current-player { border-color: var(--gold); box-shadow: 0 0 15px rgba(245,200,66,0.2) inset; }
+
+/* ===== OPPONENT PLAYER AREA ===== */
+.player-area {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: clamp(6px, 0.8vw, 14px);
+  border: 2px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.player-area.opp { flex: 1; min-width: 0; }
+.player-area.current-player { border-color: var(--gold); box-shadow: 0 0 15px rgba(245,200,66,0.3); }
+.player-area.busted { background: rgba(192,57,43,0.15); border-color: rgba(192,57,43,0.4) !important; }
+.player-area.stayed { background: rgba(39,174,96,0.1); border-color: rgba(39,174,96,0.3) !important; }
+.player-area.frozen { background: rgba(41,128,185,0.1); border-color: rgba(41,128,185,0.4) !important; }
+
+.player-header {
+  display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; flex-shrink: 0;
+}
+.player-avatar {
+  width: clamp(20px, 2vw, 32px); height: clamp(20px, 2vw, 32px);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(0.6rem, 1vw, 1rem); font-weight: 700; flex-shrink: 0;
+}
+.player-name-display { font-weight: 700; font-size: clamp(0.8rem, 1.1vw, 1.1rem); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-total-score { color: var(--gold); font-weight: 700; font-size: clamp(0.8rem, 1.1vw, 1.1rem); }
+.status-badge {
+  font-size: clamp(0.55rem, 0.7vw, 0.7rem); font-weight: 700;
+  padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-busted { background: var(--red); color: white; }
+.badge-stayed { background: var(--green); color: white; }
+.badge-frozen { background: var(--blue); color: white; }
+.badge-active { background: var(--gold); color: #1a1a1a; }
+
+/* Card hand — always centered */
+.hand {
+  display: flex; flex-wrap: wrap;
+  gap: clamp(3px, 0.4vw, 7px);
+  justify-content: center;
+  align-content: flex-start;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.opp-round-score {
+  font-size: clamp(0.65rem, 0.85vw, 0.9rem);
+  color: var(--muted);
+  text-align: center;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* ===== CARDS ===== */
+.card {
+  width: var(--card-w); height: var(--card-h);
+  border-radius: clamp(5px, 0.6vw, 10px);
+  border: 2px solid var(--card-border);
+  background: var(--card-bg);
+  display: flex; align-items: center; justify-content: center;
+  cursor: default; position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden; flex-shrink: 0;
+}
+.card img { width: 100%; height: 100%; object-fit: contain; }
+.card.sm  { width: var(--card-sm-w);  height: var(--card-sm-h); }
+.card.xs  { width: var(--card-xs-w);  height: var(--card-xs-h); }
+.card.bust-card { box-shadow: 0 0 10px var(--red); border-color: var(--red); animation: pulse-red 0.8s infinite alternate; }
+@keyframes pulse-red { from { box-shadow: 0 0 5px var(--red); } to { box-shadow: 0 0 20px var(--red); } }
+.card.flip7-card { animation: pulse-gold 0.8s infinite alternate; }
+@keyframes pulse-gold { from { box-shadow: 0 0 5px var(--gold); } to { box-shadow: 0 0 20px var(--gold); } }
+
+/* ===== HUMAN PLAYER AREA ===== */
+.human-area {
+  display: flex; flex-direction: column; gap: clamp(6px, 0.7vh, 12px);
+  flex: 1; min-height: 0;
+}
+.human-header {
+  display: flex; align-items: center; gap: clamp(0.4rem, 1vw, 1rem);
+  flex-shrink: 0;
+}
+.human-name { font-size: clamp(1rem, 1.6vw, 1.5rem); font-weight: 700; }
+.human-score { color: var(--gold); font-size: clamp(1rem, 1.6vw, 1.5rem); font-weight: 700; }
+.human-status { font-size: clamp(0.8rem, 1vw, 1rem); }
+
+.human-cards-row {
+  display: flex; gap: clamp(8px, 1.5vw, 24px);
+  align-items: flex-start; flex: 1; min-height: 0;
+}
+.hand-section { display: flex; flex-direction: column; min-width: 0; }
+.hand-section label {
+  font-size: clamp(0.6rem, 0.75vw, 0.8rem); color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; flex-shrink: 0;
+}
+.hand-section .hand { justify-content: center; flex: 1; }
+.hand-section.grow { flex: 1; }
+
+.actions-row {
+  display: flex; gap: clamp(0.5rem, 1vw, 1rem); align-items: center; flex-wrap: wrap;
+  justify-content: center;
+  flex-shrink: 0; padding-top: clamp(4px, 0.5vh, 8px);
+}
+.btn-action {
+  padding: clamp(0.5rem, 0.7vh, 0.75rem) clamp(1rem, 2vw, 2rem);
+  border: none; border-radius: 8px;
+  font-size: clamp(0.85rem, 1.2vw, 1.1rem); font-weight: 700; cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-draw { background: linear-gradient(135deg, #e67e22, #d35400); color: white; }
+.btn-draw:hover { box-shadow: 0 4px 15px rgba(230,126,34,0.5); transform: translateY(-1px); }
+.btn-stay { background: linear-gradient(135deg, var(--green), #1e8449); color: white; }
+.btn-stay:hover { box-shadow: 0 4px 15px rgba(39,174,96,0.5); transform: translateY(-1px); }
+.btn-action:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+.human-info-row {
+  font-size: clamp(0.75rem, 0.95vw, 1rem); color: var(--muted); flex-shrink: 0;
+  text-align: center;
+}
+.human-info-row strong { color: var(--text); }
+
+/* ===== DECK DISPLAY ===== */
+.deck-zone {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.deck-card-display {
+  width: var(--card-w); height: var(--card-h);
+  border-radius: clamp(5px, 0.6vw, 10px);
+  border: 2px solid var(--card-border);
+  background: #1a4a2a; overflow: hidden;
+}
+.deck-card-display img { width: 100%; height: 100%; object-fit: cover; }
+.deck-count { font-size: clamp(0.65rem, 0.8vw, 0.85rem); color: var(--muted); }
+
+/* ===== PAUSE MENU OVERLAY ===== */
+.pause-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none; z-index: 400;
+  align-items: center; justify-content: center;
+}
+.pause-overlay.visible { display: flex; }
+.pause-modal {
+  background: #1a3028; border: 2px solid var(--gold);
+  border-radius: var(--radius); padding: 2rem 2.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  min-width: 240px; align-items: stretch; text-align: center;
+}
+.pause-modal h2 { color: var(--gold); margin-bottom: 0.5rem; font-size: 1.3rem; }
+.btn-pause-action {
+  padding: 0.7rem 1rem; border: none; border-radius: 8px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+}
+.btn-resume { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #1a1a1a; }
+.btn-new-game-p { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text); }
+
+/* ===== TARGET SELECTION ===== */
+.target-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; z-index: 100; align-items: center; justify-content: center;
+}
+.target-overlay.visible { display: flex; }
+.target-modal {
+  background: #1a3028; border: 2px solid var(--gold);
+  border-radius: var(--radius); padding: 1.5rem;
+  min-width: 280px; text-align: center;
+}
+.target-modal h3 { color: var(--gold); margin-bottom: 1rem; }
+.target-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+.btn-target {
+  padding: 0.6rem 1rem; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; background: rgba(255,255,255,0.05);
+  color: var(--text); cursor: pointer; font-size: 0.9rem; transition: background 0.15s;
+}
+.btn-target:hover { background: rgba(255,255,255,0.15); }
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  display: none; z-index: 200; align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: #1a3028; border: 2px solid var(--gold);
+  border-radius: var(--radius); padding: 2rem;
+  min-width: clamp(300px, 30vw, 480px);
+  max-width: 90vw; max-height: 90vh; overflow-y: auto; text-align: center;
+}
+.modal h2 { color: var(--gold); margin-bottom: 1rem; font-size: 1.4rem; }
+.score-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.score-table th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; padding: 0.3rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.score-table td { padding: 0.5rem; font-size: 0.95rem; }
+.score-table tr.winner td { color: var(--gold); font-weight: 700; }
+.score-table .flip7-badge { color: var(--gold); font-size: 0.8rem; }
+.score-table .busted-row td { color: rgba(255,255,255,0.4); }
+.btn-next-round, .btn-new-game {
+  padding: 0.8rem 2rem; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #1a1a1a; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem;
+}
+.game-over-winner { font-size: 1.1rem; margin-bottom: 1rem; }
+.game-over-winner strong { color: var(--gold); }
+
+/* ===== FLIP 7 ANIMATION ===== */
+.flip7-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; z-index: 300;
+  align-items: center; justify-content: center; flex-direction: column; gap: 1rem;
+}
+.flip7-overlay.visible { display: flex; animation: fade-in 0.3s; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.flip7-text { font-size: clamp(2rem, 5vw, 4rem); font-weight: 900; color: var(--gold); text-shadow: 0 0 40px rgba(245,200,66,0.8); animation: bounce 0.5s ease infinite alternate; }
+@keyframes bounce { from { transform: scale(1); } to { transform: scale(1.05); } }
+.flip7-sub { font-size: clamp(1rem, 2vw, 1.5rem); color: white; }
+.flip7-bonus { font-size: clamp(1.3rem, 2.5vw, 2rem); font-weight: 700; color: #66ff99; }
+
+/* ===== CARD DEAL ANIMATION ===== */
+.flying-card {
+  position: fixed;
+  z-index: 500;
+  pointer-events: none;
+  border-radius: clamp(5px, 0.6vw, 10px);
+  border: 2px solid var(--card-border);
+  background: var(--card-bg);
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+.flying-card img { width: 100%; height: 100%; object-fit: contain; }
+@keyframes fly-to-hand {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  40%  { transform: translate(var(--fly-x-mid), var(--fly-y-mid)) scale(1.15); opacity: 1; }
+  100% { transform: translate(var(--fly-x), var(--fly-y)) scale(0.85); opacity: 0; }
+}
+
+/* Used Second Chance card — red NO overlay */
+.card .sc-used-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(192,57,43,0.55);
+  border-radius: inherit;
+  font-size: 2em;
+  pointer-events: none;
+}
+
+/* Freeze/FlipThree badges shown below a player's hand */
+.action-badge-row {
+  display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+  margin-top: 4px; flex-shrink: 0;
+}
+.action-badge {
+  font-size: clamp(0.55rem, 0.7vw, 0.72rem);
+  padding: 2px 7px; border-radius: 4px; font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.action-badge.freeze-badge { background: var(--blue); color: white; }
+.action-badge.flipthree-badge { background: var(--purple); color: white; }
+
+/* ===== SECOND CHANCE MODAL ===== */
+.btn-use-sc { background: linear-gradient(135deg, var(--purple), #6c3483); color: white; }
+.btn-skip-sc { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="screen active">
+  <div class="logo">FLIP 7</div>
+  <div class="logo-sub">Race to 200 points</div>
+  <div class="setup-box">
+    <h2>Game Setup</h2>
+    <div class="player-count-row">
+      <label>Number of Players</label>
+      <div class="count-btns">
+        <button class="count-btn" data-count="2">2</button>
+        <button class="count-btn active" data-count="3">3</button>
+        <button class="count-btn" data-count="4">4</button>
+      </div>
+    </div>
+    <div class="players-config" id="players-config"></div>
+    <button class="btn-start" id="btn-start">Start Game</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div class="round-info" id="round-info">Round 1</div>
+    <div class="game-log-header" id="game-log"></div>
+    <button class="btn-menu" id="btn-menu">⏸ Menu</button>
+  </div>
+  <div class="game-body" id="game-body">
+    <div class="zone-opponents" id="zone-opponents"></div>
+    <div class="zone-human" id="zone-human"></div>
+  </div>
+</div>
+
+<!-- PAUSE MENU -->
+<div class="pause-overlay" id="pause-overlay">
+  <div class="pause-modal">
+    <h2>⏸ Game Paused</h2>
+    <button class="btn-pause-action btn-resume" id="btn-resume">▶ Resume</button>
+    <button class="btn-pause-action btn-new-game-p" id="btn-new-game-pause">New Game</button>
+  </div>
+</div>
+
+<!-- TARGET SELECTION -->
+<div class="target-overlay" id="target-overlay">
+  <div class="target-modal">
+    <h3 id="target-title">Select a player</h3>
+    <div class="target-buttons" id="target-buttons"></div>
+  </div>
+</div>
+
+<!-- ROUND END MODAL -->
+<div class="modal-overlay" id="round-modal">
+  <div class="modal">
+    <h2>End of Round</h2>
+    <table class="score-table" id="round-score-table"></table>
+    <button class="btn-next-round" id="btn-next-round">Next Round</button>
+  </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div class="modal-overlay" id="gameover-modal">
+  <div class="modal">
+    <h2>Game Over!</h2>
+    <div class="game-over-winner" id="go-winner"></div>
+    <table class="score-table" id="go-score-table"></table>
+    <button class="btn-new-game" id="btn-new-game">New Game</button>
+  </div>
+</div>
+
+<!-- FLIP 7 ANIMATION -->
+<div class="flip7-overlay" id="flip7-overlay">
+  <div class="flip7-text">FLIP 7!</div>
+  <div class="flip7-sub" id="flip7-who"></div>
+  <div class="flip7-bonus">+15 BONUS</div>
+</div>
+
+<!-- SECOND CHANCE MODAL -->
+<div class="modal-overlay" id="sc-modal">
+  <div class="modal sc-modal">
+    <h3>⚡ Second Chance!</h3>
+    <p id="sc-text">You drew a duplicate card. Use your Second Chance to survive?</p>
+    <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1rem;">
+      <button class="btn-action btn-use-sc" id="btn-use-sc">Use Second Chance</button>
+      <button class="btn-action btn-skip-sc" id="btn-skip-sc">Accept Bust</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====================================================================
+//  FLIP 7 — GAME ENGINE
+// ====================================================================
+
+const IMG = p => `images/${p}`;
+const CARD_IMAGES = {
+  '0':IMG('0.png'),'1':IMG('1.png'),'2':IMG('2.png'),'3':IMG('3.png'),
+  '4':IMG('4.png'),'5':IMG('5.png'),'6':IMG('6.png'),'7':IMG('7.png'),
+  '8':IMG('8.png'),'9':IMG('9.png'),'10':IMG('10.png'),'11':IMG('11.png'),
+  '12':IMG('12.png'),'+4':IMG('+4.png'),'+6':IMG('+6.png'),'+8':IMG('+8.png'),
+  '+10':IMG('+10.png'),'x2':IMG('x2.png'),'freeze':IMG('freeze.png'),
+  'flipThree':IMG('flip-three.png'),'secondChance':IMG('second-chance.png'),
+  'back':IMG('back-card.png'),
+};
+
+const DECK_CONFIG = [
+  { type:'number', value:0,  count:1 },
+  { type:'number', value:1,  count:1 },
+  { type:'number', value:2,  count:2 },
+  { type:'number', value:3,  count:3 },
+  { type:'number', value:4,  count:4 },
+  { type:'number', value:5,  count:5 },
+  { type:'number', value:6,  count:6 },
+  { type:'number', value:7,  count:7 },
+  { type:'number', value:8,  count:8 },
+  { type:'number', value:9,  count:9 },
+  { type:'number', value:10, count:10 },
+  { type:'number', value:11, count:11 },
+  { type:'number', value:12, count:12 },
+  { type:'bonus',      value:'+4',  count:1, points:4 },
+  { type:'bonus',      value:'+6',  count:1, points:6 },
+  { type:'bonus',      value:'+8',  count:1, points:8 },
+  { type:'bonus',      value:'+10', count:1, points:10 },
+  { type:'multiplier', value:'x2',  count:1, points:0 },
+  { type:'action', value:'freeze',       action:'freeze',       count:3 },
+  { type:'action', value:'flipThree',    action:'flipThree',    count:3 },
+  { type:'action', value:'secondChance', action:'secondChance', count:3 },
+];
+
+const WINNING_SCORE  = 200;
+const FLIP7_BONUS    = 15;
+// No stay bonus in official rules
+const PLAYER_COLORS  = ['#e74c3c','#3498db','#2ecc71','#9b59b6'];
+const PLAYER_NAMES   = ['Darren','Player 2','Player 3','Player 4'];
+
+let _cardId = 0;
+const makeCard = cfg => ({
+  id: _cardId++, type: cfg.type, value: cfg.value,
+  action: cfg.action || null,
+  points: cfg.points ?? (cfg.type === 'number' ? cfg.value : 0),
+  imgKey: cfg.action || String(cfg.value),
+});
+
+function buildDeck() {
+  const d = [];
+  for (const cfg of DECK_CONFIG)
+    for (let i = 0; i < cfg.count; i++) d.push(makeCard(cfg));
+  return shuffle(d);
+}
+function shuffle(a) {
+  a = [...a];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ====================================================================
+//  GAME STATE
+// ====================================================================
+let G = null;
+
+function createPlayer(id, name, type, color) {
+  return { id, name, type, color, totalScore: 0,
+    hand: [], bonusCards: [], receivedActions: [],
+    hasStayed: false, isBusted: false, isFrozen: false };
+}
+
+function startGame(playerDefs) {
+  const players = playerDefs.map((p, i) => createPlayer(i, p.name, p.type, PLAYER_COLORS[i]));
+  // Human player goes first each new game; find first human or default to 0
+  const humanIdx = players.findIndex(p => p.type === 'human');
+  G = {
+    players,
+    deck: [], discard: [],
+    round: 1,
+    roundStartIdx: humanIdx !== -1 ? humanIdx : 0,
+    currentIdx: 0,
+    phase: 'playing',
+    log: '',
+    forcedDraw: null,
+    scPending: null,
+    targetPending: null,
+    flip7PlayerId: null,
+  };
+  startRound();
+}
+
+function startRound() {
+  for (const p of G.players) {
+    p.hand = []; p.bonusCards = []; p.receivedActions = [];
+    p.hasStayed = false; p.isBusted = false; p.isFrozen = false;
+  }
+  G.phase = 'playing';
+  G.forcedDraw = null; G.scPending = null;
+  G.targetPending = null; G.flip7PlayerId = null;
+
+  if (G.deck.length < 10) {
+    G.deck = [...G.deck, ...shuffle(G.discard)];
+    G.discard = [];
+  }
+  if (G.deck.length === 0) G.deck = buildDeck();
+
+  // Deal 1 card to each player starting from roundStartIdx, going left
+  const n = G.players.length;
+  for (let i = 0; i < n; i++) {
+    dealOneToPlayer(G.players[(G.roundStartIdx + i) % n]);
+  }
+
+  // Current player is the round start player
+  G.currentIdx = G.roundStartIdx;
+  renderGame();
+  maybeAI();
+}
+
+function reshuffleIfNeeded() {
+  if (G.deck.length === 0 && G.discard.length > 0) {
+    G.deck = shuffle(G.discard);
+    G.discard = [];
+    setLog('Draw pile empty — discard reshuffled.');
+  }
+}
+
+function dealOneToPlayer(player) {
+  // Keep drawing until player gets a usable card (number, bonus, or secondChance).
+  // Freeze/FlipThree dealt at round-start go to discard and we try again.
+  let attempts = 0;
+  while (attempts < 100) {
+    reshuffleIfNeeded();
+    if (G.deck.length === 0) return null;
+    const card = G.deck.pop();
+    attempts++;
+    if (card.type === 'number') {
+      player.hand.push(card);
+      return card;
+    } else if (card.type === 'bonus' || card.type === 'multiplier') {
+      player.bonusCards.push(card);
+      return card;
+    } else if (card.type === 'action') {
+      if (card.action === 'secondChance') {
+        player.bonusCards.push(card);
+        return card;
+      } else {
+        // Freeze / FlipThree — discard and redeal
+        G.discard.push(card);
+      }
+    }
+  }
+  return null;
+}
+
+function calcRoundScore(player) {
+  if (player.isBusted) return 0;
+  const nums = player.hand.filter(c => c.type === 'number');
+  let sum = nums.reduce((s, c) => s + c.value, 0);
+  if (player.bonusCards.some(c => c.type === 'multiplier')) sum *= 2;
+  const bonus = player.bonusCards.filter(c => c.type === 'bonus').reduce((s, c) => s + c.points, 0);
+  const flip7 = G.flip7PlayerId === player.id ? FLIP7_BONUS : 0;
+  return sum + bonus + flip7;
+}
+
+function bustProb(player) {
+  const myVals = new Set(player.hand.filter(c => c.type === 'number').map(c => c.value));
+  if (myVals.size === 0 || G.deck.length === 0) return 0;
+  const busting = G.deck.filter(c => c.type === 'number' && myVals.has(c.value)).length;
+  return busting / G.deck.length;
+}
+
+function setLog(msg) {
+  G.log = msg;
+  const el = document.getElementById('game-log');
+  if (el) el.textContent = msg;
+}
+
+// ====================================================================
+//  CARD DEAL ANIMATION
+// ====================================================================
+function getDeckRect() {
+  const dc = document.querySelector('.deck-card-display');
+  return dc ? dc.getBoundingClientRect() : null;
+}
+
+function getHandRect(player) {
+  if (player.type === 'human') {
+    // Human is always in #zone-human
+    const zones = document.querySelectorAll('#zone-human .hand');
+    for (const h of zones) {
+      const r = h.getBoundingClientRect();
+      if (r.width > 0) return r;
+    }
+    return null;
+  }
+  // Opponent: find their specific player-area by data-player-id
+  const area = document.querySelector(`[data-player-id="${player.id}"] .hand`);
+  if (area) {
+    const r = area.getBoundingClientRect();
+    if (r.width > 0) return r;
+  }
+  // Fallback: first visible hand in opponents zone
+  const zones = document.querySelectorAll('#zone-opponents .hand');
+  for (const h of zones) {
+    const r = h.getBoundingClientRect();
+    if (r.width > 0) return r;
+  }
+  return null;
+}
+
+/**
+ * Get the bounding rect of a player's hand area (not the whole panel).
+ * Used as source/destination for player-to-player card animations.
+ */
+function getPlayerAreaRect(player) {
+  let hand;
+  if (player.type === 'human') {
+    hand = document.querySelector('#zone-human .hand');
+  } else {
+    hand = document.querySelector(`[data-player-id="${player.id}"] .hand`);
+  }
+  return hand ? hand.getBoundingClientRect() : null;
+}
+
+/**
+ * Animate a card flying from the deck to the target hand area.
+ * imgKey: card image key (or 'back' for face-down).
+ * toRect: destination getBoundingClientRect().
+ * cb: called after animation completes.
+ * fromRect (optional): override source rect; defaults to deck.
+ */
+function animateDeal(imgKey, toRect, cb, fromRect) {
+  const deckRect = getDeckRect();
+  if (!fromRect) fromRect = deckRect;
+  if (!fromRect || !toRect) { cb(); return; }
+
+  // Always use deck card dimensions for the flying card size
+  const w = deckRect ? deckRect.width  : fromRect.width;
+  const h = deckRect ? deckRect.height : fromRect.height;
+
+  // Source position: center of fromRect
+  const srcLeft = fromRect.left + fromRect.width  / 2 - w / 2;
+  const srcTop  = fromRect.top  + fromRect.height / 2 - h / 2;
+
+  const fly = document.createElement('div');
+  fly.className = 'flying-card';
+  fly.style.cssText = `
+    left: ${srcLeft}px;
+    top: ${srcTop}px;
+    width: ${w}px;
+    height: ${h}px;
+  `;
+  const img = document.createElement('img');
+  img.src = CARD_IMAGES[imgKey] || CARD_IMAGES['back'];
+  fly.appendChild(img);
+
+  // Destination: center of hand rect
+  const destX = (toRect.left + toRect.width / 2) - (srcLeft + w / 2);
+  const destY = (toRect.top  + toRect.height / 2) - (srcTop  + h / 2);
+
+  // Arc midpoint: halfway + slight upward curve
+  const midX = destX * 0.5;
+  const midY = destY * 0.5 - 60;
+
+  fly.style.setProperty('--fly-x', `${destX}px`);
+  fly.style.setProperty('--fly-y', `${destY}px`);
+  fly.style.setProperty('--fly-x-mid', `${midX}px`);
+  fly.style.setProperty('--fly-y-mid', `${midY}px`);
+  fly.style.animation = 'fly-to-hand 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+
+  document.body.appendChild(fly);
+  setTimeout(() => {
+    fly.remove();
+    cb();
+  }, 520);
+}
+
+
+
+// ====================================================================
+//  TURN LOGIC
+// ====================================================================
+
+function isRoundOver() {
+  return G.players.filter(p => !p.isBusted && !p.hasStayed).length === 0
+      || G.flip7PlayerId !== null;
+}
+
+function nextPlayer() {
+  if (isRoundOver()) { endRound(); return; }
+  // Advance left (next index in array = player to the left)
+  const n = G.players.length;
+  let next = (G.currentIdx + 1) % n;
+  let tries = 0;
+  while ((G.players[next].isBusted || G.players[next].hasStayed) && tries < n) {
+    next = (next + 1) % n;
+    tries++;
+  }
+  G.currentIdx = next;
+  renderGame();
+  maybeAI();
+}
+
+function playerStay() {
+  const p = G.players[G.currentIdx];
+  p.hasStayed = true;
+  setLog(`${p.name} stays.`);
+  renderGame();
+  if (isRoundOver()) { endRound(); return; }
+  setTimeout(() => nextPlayer(), 300);
+}
+
+function playerDraw() {
+  const p = G.players[G.currentIdx];
+  reshuffleIfNeeded();
+  if (G.deck.length === 0) { playerStay(); return; }
+  const card = G.deck.pop();
+
+  const toRect = getHandRect(p);
+
+  // Disable only the in-game action buttons during animation (not modal buttons)
+  document.querySelectorAll('#zone-human .btn-action').forEach(b => b.disabled = true);
+
+  // Show the card flying (face-up for human, face-down for AI — reveal after)
+  const flyKey = p.type === 'human' ? (card.imgKey || String(card.value)) : 'back';
+  animateDeal(flyKey, toRect, () => {
+    // Animation done — now process the card
+    _processDrawnCard(p, card, p.type === 'human');
+  });
+}
+
+function _processDrawnCard(p, card, isHuman) {
+  if (card.type === 'action') {
+    setLog(`${p.name} drew: ${card.value}`);
+    handleActionCard(card, p);
+    return;
+  }
+
+  setLog(`${p.name} drew: ${card.value}`);
+
+  if (card.type === 'number') {
+    p.hand.push(card);
+    const vals = p.hand.map(c => c.value);
+    const unique = new Set(vals);
+    if (unique.size < vals.length) {
+      // Would bust
+      const scIdx = p.bonusCards.findIndex(c => c.action === 'secondChance' && !c.used);
+      if (scIdx !== -1) {
+        if (p.type === 'human') {
+          G.scPending = { card, playerIdx: p.id };
+          G.phase = 'waitSC';
+          renderGame();
+          showSCModal(p, card);
+          return;
+        } else {
+          useSecondChance(p, card);
+          renderGame();
+          setTimeout(() => { if (isRoundOver()) endRound(); else nextPlayer(); }, 600);
+          return;
+        }
+      } else {
+        p.isBusted = true;
+        setLog(`${p.name} BUSTED on ${card.value}!`);
+        renderGame();
+        if (isRoundOver()) { setTimeout(() => endRound(), 600); return; }
+        setTimeout(() => nextPlayer(), 800);
+        return;
+      }
+    } else if (unique.size === 7) {
+      G.flip7PlayerId = p.id;
+      renderGame();
+      showFlip7Anim(p, () => endRound());
+      return;
+    }
+  } else if (card.type === 'bonus' || card.type === 'multiplier') {
+    p.bonusCards.push(card);
+    setLog(`${p.name} drew bonus: ${card.value}`);
+  }
+
+  renderGame();
+
+  // After drawing, always move to next player (human or AI)
+  setTimeout(() => {
+    if (isRoundOver()) { endRound(); return; }
+    nextPlayer();
+  }, 300);
+}
+
+
+function handleActionCard(card, actor) {
+  const action = card.action;
+
+  if (action === 'secondChance') {
+    const alreadyHas = actor.bonusCards.some(c => c.action === 'secondChance' && !c.used);
+    if (!alreadyHas) {
+      actor.bonusCards.push(card);
+      setLog(`${actor.name} received a Second Chance card!`);
+      renderGame();
+      setTimeout(() => afterActionResolved(actor), 600);
+    } else {
+      const recipients = G.players.filter(p =>
+        p.id !== actor.id && !p.isBusted && !p.hasStayed &&
+        !p.bonusCards.some(c => c.action === 'secondChance' && !c.used)
+      );
+      if (recipients.length === 0) {
+        G.discard.push(card);
+        setLog(`${actor.name}'s extra Second Chance discarded.`);
+        renderGame();
+        setTimeout(() => afterActionResolved(actor), 600);
+      } else if (actor.type === 'human') {
+        G.phase = 'waitTarget';
+        showTargetModal('Give Second Chance to:', recipients, target => {
+          G.phase = 'playing';
+          renderGame();
+          const fromRect = getPlayerAreaRect(actor);
+          const toRect   = getPlayerAreaRect(target);
+          animateDeal(card.imgKey, toRect, () => {
+            target.bonusCards.push(card);
+            setLog(`${actor.name} gave Second Chance to ${target.name}.`);
+            renderGame();
+            setTimeout(() => afterActionResolved(actor), 300);
+          }, fromRect);
+        });
+      } else {
+        const target = aiPickTarget(actor, 'giveSecondChance', recipients);
+        setLog(`${actor.name} gave Second Chance to ${target.name}.`);
+        renderGame();
+        const fromRect = getPlayerAreaRect(actor);
+        const toRect   = getPlayerAreaRect(target);
+        animateDeal(card.imgKey, toRect, () => {
+          target.bonusCards.push(card);
+          renderGame();
+          setTimeout(() => afterActionResolved(actor), 300);
+        }, fromRect);
+      }
+    }
+    return;
+  }
+
+  if (action === 'freeze') {
+    const targets = G.players.filter(p => !p.isBusted && !p.hasStayed);
+    if (actor.type === 'human') {
+      G.phase = 'waitTarget';
+      showTargetModal('Freeze a player:', targets, target => {
+        G.phase = 'playing';
+        renderGame();
+        const fromRect = getPlayerAreaRect(actor);
+        const toRect   = getPlayerAreaRect(target);
+        animateDeal(card.imgKey, toRect, () => {
+          target.hasStayed = true; target.isFrozen = true;
+          target.receivedActions.push(card);
+          setLog(`${actor.name} froze ${target.name}!`);
+          renderGame();
+          setTimeout(() => afterActionResolved(actor), 300);
+        }, fromRect);
+      });
+    } else {
+      const target = aiPickTarget(actor, 'freeze', targets);
+      setLog(`${actor.name} froze ${target.name}!`);
+      renderGame();
+      const fromRect = getPlayerAreaRect(actor);
+      const toRect   = getPlayerAreaRect(target);
+      animateDeal(card.imgKey, toRect, () => {
+        target.hasStayed = true; target.isFrozen = true;
+        target.receivedActions.push(card);
+        renderGame();
+        setTimeout(() => afterActionResolved(actor), 300);
+      }, fromRect);
+    }
+    return;
+  }
+
+  if (action === 'flipThree') {
+    const targets = G.players.filter(p => !p.isBusted && !p.hasStayed);
+    if (actor.type === 'human') {
+      G.phase = 'waitTarget';
+      showTargetModal('Flip Three — choose a player to draw 3 cards:', targets, target => {
+        G.phase = 'playing';
+        renderGame();
+        const fromRect = getPlayerAreaRect(actor);
+        const toRect   = getPlayerAreaRect(target);
+        animateDeal(card.imgKey, toRect, () => {
+          target.receivedActions.push(card);
+          setLog(`${target.name} must draw 3 cards!`);
+          G.forcedDraw = { targetId: target.id, remaining: 3, pendingActions: [] };
+          renderGame();
+          setTimeout(() => processForcedDraw(), 300);
+        }, fromRect);
+      });
+    } else {
+      const target = aiPickTarget(actor, 'flipThree', targets);
+      setLog(`${actor.name} forces ${target.name} to draw 3!`);
+      renderGame();
+      const fromRect = getPlayerAreaRect(actor);
+      const toRect   = getPlayerAreaRect(target);
+      animateDeal(card.imgKey, toRect, () => {
+        target.receivedActions.push(card);
+        G.forcedDraw = { targetId: target.id, remaining: 3, pendingActions: [] };
+        renderGame();
+        setTimeout(() => processForcedDraw(), 300);
+      }, fromRect);
+    }
+    return;
+  }
+
+  G.discard.push(card);
+  afterActionResolved(actor);
+}
+
+function processForcedDraw() {
+  if (!G.forcedDraw || G.forcedDraw.remaining <= 0) {
+    if (G.forcedDraw && G.forcedDraw.pendingActions.length > 0) {
+      const { card, actor } = G.forcedDraw.pendingActions.shift();
+      G.forcedDraw = null;
+      handleActionCard(card, actor);
+      return;
+    }
+    G.forcedDraw = null;
+    afterActionResolved(G.players[G.currentIdx]);
+    return;
+  }
+
+  const fd = G.forcedDraw;
+  const target = G.players.find(p => p.id === fd.targetId);
+  if (!target || target.isBusted) { G.forcedDraw = null; afterActionResolved(G.players[G.currentIdx]); return; }
+
+  reshuffleIfNeeded();
+  if (G.deck.length === 0) { G.forcedDraw = null; afterActionResolved(G.players[G.currentIdx]); return; }
+
+  const card = G.deck.pop();
+  fd.remaining--;
+  setLog(`${target.name} forced to draw: ${card.value}`);
+
+  if (card.type === 'action') {
+    fd.pendingActions.push({ card, actor: target });
+    renderGame();
+    setTimeout(() => processForcedDraw(), 700);
+    return;
+  }
+
+  if (card.type === 'number') {
+    target.hand.push(card);
+    const vals = target.hand.map(c => c.value);
+    const unique = new Set(vals);
+    if (unique.size < vals.length) {
+      const scIdx = target.bonusCards.findIndex(c => c.action === 'secondChance' && !c.used);
+      if (scIdx !== -1) {
+        if (target.type === 'human') {
+          G.scPending = { card, playerIdx: target.id };
+          G.phase = 'waitSC'; renderGame();
+          showSCModal(target, card); return;
+        } else { useSecondChance(target, card); }
+      } else {
+        target.isBusted = true;
+        setLog(`${target.name} BUSTED during Flip Three!`);
+        G.forcedDraw = null;
+      }
+    } else if (unique.size === 7) {
+      G.flip7PlayerId = target.id; G.forcedDraw = null;
+      renderGame(); showFlip7Anim(target, () => endRound()); return;
+    }
+  } else if (card.type === 'bonus' || card.type === 'multiplier') {
+    target.bonusCards.push(card);
+  }
+
+  renderGame();
+  if (target.isBusted || G.flip7PlayerId !== null) {
+    G.forcedDraw = null;
+    if (G.flip7PlayerId === null) setTimeout(() => afterActionResolved(G.players[G.currentIdx]), 600);
+    return;
+  }
+  setTimeout(() => processForcedDraw(), 700);
+}
+
+function useSecondChance(player, bustCard) {
+  const scIdx = player.bonusCards.findIndex(c => c.action === 'secondChance' && !c.used);
+  if (scIdx !== -1) player.bonusCards[scIdx].used = true; // stays in hand, marked used
+  const ci = player.hand.findIndex(c => c.id === bustCard.id);
+  if (ci !== -1) G.discard.push(player.hand.splice(ci, 1)[0]);
+  setLog(`${player.name} used Second Chance!`);
+}
+
+function afterActionResolved(actor) {
+  if (isRoundOver()) { endRound(); return; }
+  // Always advance to next player — human's draw/stay already happened
+  setTimeout(() => nextPlayer(), 400);
+}
+
+function showFlip7Anim(player, cb) {
+  const ov = document.getElementById('flip7-overlay');
+  document.getElementById('flip7-who').textContent = `${player.name} collects 7 unique numbers!`;
+  ov.classList.add('visible');
+  setTimeout(() => { ov.classList.remove('visible'); cb(); }, 2800);
+}
+
+// ====================================================================
+//  ROUND END
+// ====================================================================
+function endRound() {
+  G.phase = 'roundEnd';
+  const rows = G.players.map(p => {
+    const roundScore = calcRoundScore(p);
+    p.totalScore += roundScore;
+    return { player: p, roundScore };
+  });
+  renderGame();
+  showRoundModal(rows);
+}
+
+function showRoundModal(rows) {
+  const table = document.getElementById('round-score-table');
+  table.innerHTML = `<tr><th>Player</th><th>Round</th><th>Total</th></tr>` +
+    rows.map(r => {
+      const cls = r.player.isBusted ? 'busted-row' : (r.player.id === G.flip7PlayerId ? 'winner' : '');
+      const badge = r.player.id === G.flip7PlayerId ? '<span class="flip7-badge">★ FLIP 7</span>'
+                  : r.player.isFrozen ? '❄️' : (r.player.hasStayed && !r.player.isBusted ? '✓' : '');
+      return `<tr class="${cls}"><td>${r.player.name} ${badge}</td><td>+${r.roundScore}</td><td>${r.player.totalScore}</td></tr>`;
+    }).join('');
+  document.getElementById('round-modal').classList.add('visible');
+}
+
+function nextRound() {
+  document.getElementById('round-modal').classList.remove('visible');
+  const winner = G.players.find(p => p.totalScore >= WINNING_SCORE);
+  if (winner) { showGameOver(winner); return; }
+  G.round++;
+  // Rotate starting player left each round
+  G.roundStartIdx = (G.roundStartIdx + 1) % G.players.length;
+  startRound();
+}
+
+function showGameOver(winner) {
+  G.phase = 'gameOver';
+  document.getElementById('go-winner').innerHTML = `🏆 <strong>${winner.name}</strong> wins with ${winner.totalScore} points!`;
+  const sorted = [...G.players].sort((a, b) => b.totalScore - a.totalScore);
+  document.getElementById('go-score-table').innerHTML =
+    `<tr><th>Rank</th><th>Player</th><th>Score</th></tr>` +
+    sorted.map((p, i) => `<tr class="${i===0?'winner':''}"><td>${i+1}</td><td>${p.name}</td><td>${p.totalScore}</td></tr>`).join('');
+  document.getElementById('gameover-modal').classList.add('visible');
+}
+
+// ====================================================================
+//  AI
+// ====================================================================
+function maybeAI() {
+  const p = G.players[G.currentIdx];
+  if (!p || p.type === 'human' || p.isBusted || p.hasStayed || G.phase !== 'playing') return;
+  setTimeout(() => {
+    if (G.phase !== 'playing') return;
+    aiDecide(p) === 'stay' ? playerStay() : playerDraw();
+  }, 700 + Math.random() * 400);
+}
+
+function aiDecide(player) {
+  const nums = player.hand.filter(c => c.type === 'number');
+  if (nums.length === 0) return 'draw';
+  const score = calcRoundScore(player);
+  const bp = bustProb(player);
+  const n = nums.length;
+  // Never stay if holding a Second Chance — use it as a safety net
+  const hasSC = player.bonusCards.some(c => c.action === 'secondChance' && !c.used);
+  if (hasSC) return 'draw';
+  switch (player.type) {
+    case 'ai-easy':
+      if (n >= 4 && Math.random() < 0.4) return 'stay';
+      if (bp > 0.5) return Math.random() < 0.5 ? 'stay' : 'draw';
+      return Math.random() < 0.7 ? 'draw' : 'stay';
+    case 'ai-normal':
+      if (player.totalScore + score >= WINNING_SCORE) return 'stay';
+      if (score >= 30 && bp > 0.3) return 'stay';
+      if (score >= 20 && bp > 0.45) return 'stay';
+      if (bp > 0.55) return 'stay';
+      return 'draw';
+    case 'ai-hard':
+      if (player.totalScore + score >= WINNING_SCORE) return 'stay';
+      if (n >= 5 && bp < 0.35) return 'draw';
+      if (score >= 35) return 'stay';
+      if (bp > 0.4) return 'stay';
+      if (score >= 20 && bp > 0.3) return 'stay';
+      return 'draw';
+  }
+  return 'draw';
+}
+
+function aiPickTarget(actor, action, targets) {
+  if (targets.length === 1) return targets[0];
+  const others = targets.filter(t => t.id !== actor.id);
+  switch (action) {
+    case 'freeze': case 'flipThree':
+      return (others.length > 0 ? others : targets).sort((a, b) =>
+        (b.totalScore + calcRoundScore(b)) - (a.totalScore + calcRoundScore(a)))[0];
+    case 'giveSecondChance':
+      return targets.sort((a, b) => a.totalScore - b.totalScore)[0];
+  }
+  return targets[0];
+}
+
+// ====================================================================
+//  MODALS
+// ====================================================================
+function showTargetModal(title, players, onSelect) {
+  const overlay = document.getElementById('target-overlay');
+  document.getElementById('target-title').textContent = title;
+  const btns = document.getElementById('target-buttons');
+  btns.innerHTML = '';
+  for (const p of players) {
+    const btn = document.createElement('button');
+    btn.className = 'btn-target';
+    btn.textContent = `${p.name}  (${p.totalScore} pts)`;
+    btn.onclick = () => { overlay.classList.remove('visible'); onSelect(p); };
+    btns.appendChild(btn);
+  }
+  overlay.classList.add('visible');
+}
+
+function showSCModal(player, card) {
+  document.getElementById('sc-text').textContent =
+    `${player.name} drew a duplicate ${card.value}. Use Second Chance to survive?`;
+  document.getElementById('sc-modal').classList.add('visible');
+}
+
+// ====================================================================
+//  RENDER
+// ====================================================================
+function cardEl(card, sizeClass = '') {
+  const div = document.createElement('div');
+  div.className = `card ${sizeClass}`;
+  const img = document.createElement('img');
+  img.src = CARD_IMAGES[card.imgKey] || CARD_IMAGES[String(card.value)];
+  img.alt = String(card.value);
+  img.onerror = () => { img.style.display='none'; div.textContent = card.value; };
+  div.appendChild(img);
+  // Used Second Chance: red NO symbol overlay
+  if (card.action === 'secondChance' && card.used) {
+    const ov = document.createElement('div');
+    ov.className = 'sc-used-overlay';
+    ov.textContent = '🚫';
+    div.appendChild(ov);
+  }
+  return div;
+}
+
+function backCardEl(sizeClass = '') {
+  const div = document.createElement('div');
+  div.className = `card ${sizeClass}`;
+  const img = document.createElement('img');
+  img.src = CARD_IMAGES['back']; img.alt = 'card';
+  div.appendChild(img);
+  return div;
+}
+
+function renderOpponent(player) {
+  const isCurrent = player.id === G.players[G.currentIdx].id;
+  let cls = 'player-area opp';
+  if (isCurrent && !player.isBusted && !player.hasStayed) cls += ' current-player';
+  if (player.isBusted) cls += ' busted';
+  else if (player.isFrozen) cls += ' frozen';
+  else if (player.hasStayed) cls += ' stayed';
+
+  const area = document.createElement('div');
+  area.className = cls;
+  area.dataset.playerId = player.id;
+
+  let badge = '';
+  if (player.isBusted) badge = '<span class="status-badge badge-busted">BUSTED</span>';
+  else if (player.isFrozen) badge = '<span class="status-badge badge-frozen">FROZEN</span>';
+  else if (player.hasStayed) badge = '<span class="status-badge badge-stayed">STAYED</span>';
+  else if (isCurrent) badge = '<span class="status-badge badge-active">ACTIVE</span>';
+
+  const roundScore = calcRoundScore(player);
+
+  area.innerHTML = `
+    <div class="player-header">
+      <div class="player-avatar" style="background:${player.color}">${player.name[0]}</div>
+      <div class="player-name-display">${player.name}</div>
+      <div class="player-total-score">${player.totalScore} pts</div>
+      ${badge}
+    </div>
+  `;
+
+  const hand = document.createElement('div');
+  hand.className = 'hand';
+  for (const c of player.hand) hand.appendChild(cardEl(c, 'xs'));
+  for (const c of player.bonusCards) hand.appendChild(cardEl(c, 'xs'));
+  if ((player.isBusted || player.hasStayed) && player.hand.length === 0 && player.bonusCards.length === 0)
+    hand.appendChild(backCardEl('xs'));
+  area.appendChild(hand);
+
+  // Show Freeze/FlipThree cards received this round
+  if (player.receivedActions && player.receivedActions.length > 0) {
+    const badgeRow = document.createElement('div');
+    badgeRow.className = 'action-badge-row';
+    for (const c of player.receivedActions) {
+      const b = document.createElement('span');
+      b.className = `action-badge ${c.action === 'freeze' ? 'freeze-badge' : 'flipthree-badge'}`;
+      b.textContent = c.action === 'freeze' ? '❄️ FROZEN' : '🔄 FLIP 3';
+      badgeRow.appendChild(b);
+    }
+    area.appendChild(badgeRow);
+  }
+
+  const info = document.createElement('div');
+  info.className = 'opp-round-score';
+  info.textContent = player.isBusted ? 'BUST — 0 pts' : `Round: ${roundScore} pts`;
+  area.appendChild(info);
+
+  return area;
+}
+
+function renderHuman(player) {
+  const roundScore = calcRoundScore(player);
+  const bp = bustProb(player);
+  const bpPct = Math.round(bp * 100);
+  const numCards = player.hand.filter(c => c.type === 'number').length;
+  const isMyTurn = player.id === G.players[G.currentIdx].id;
+  const canAct = isMyTurn && !player.isBusted && !player.hasStayed && !player.isFrozen && G.phase === 'playing';
+
+  const area = document.createElement('div');
+  area.className = 'human-area';
+
+  let statusText = '';
+  if (player.isBusted) statusText = `<span style="color:var(--red);font-weight:700;">BUSTED</span>`;
+  else if (player.isFrozen) statusText = `<span style="color:var(--blue);">FROZEN</span>`;
+  else if (player.hasStayed) statusText = `<span style="color:var(--green);">STAYED</span>`;
+  else if (isMyTurn) statusText = `<span style="color:var(--gold);">YOUR TURN</span>`;
+  else statusText = `<span style="color:var(--muted);">Waiting…</span>`;
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'human-header';
+  hdr.innerHTML = `
+    <div class="player-avatar" style="background:${player.color};width:clamp(24px,2.5vw,40px);height:clamp(24px,2.5vw,40px);font-size:clamp(0.8rem,1.2vw,1.2rem);">${player.name[0]}</div>
+    <div class="human-name">${player.name}</div>
+    <div class="human-score">${player.totalScore} pts</div>
+    <div class="human-status">${statusText}</div>
+  `;
+  area.appendChild(hdr);
+
+  // Cards row
+  const cardsRow = document.createElement('div');
+  cardsRow.className = 'human-cards-row';
+
+  // Number cards (main hand)
+  const numSec = document.createElement('div');
+  numSec.className = 'hand-section grow';
+  numSec.innerHTML = `<label>Cards (${numCards}/7)</label>`;
+  const numHand = document.createElement('div');
+  numHand.className = 'hand';
+  for (const c of player.hand) numHand.appendChild(cardEl(c, 'sm'));
+  numSec.appendChild(numHand);
+
+  // Deck
+  const deckZone = document.createElement('div');
+  deckZone.className = 'deck-zone';
+  const dc = document.createElement('div');
+  dc.className = 'deck-card-display';
+  const dimg = document.createElement('img');
+  dimg.src = CARD_IMAGES['back']; dimg.alt = 'deck';
+  dc.appendChild(dimg);
+  const dcnt = document.createElement('div');
+  dcnt.className = 'deck-count';
+  dcnt.textContent = `${G.deck.length} cards`;
+  deckZone.appendChild(dc);
+  deckZone.appendChild(dcnt);
+
+  cardsRow.appendChild(numSec);
+  cardsRow.appendChild(deckZone);
+  area.appendChild(cardsRow);
+
+  // Bonus / special below the main hand
+  if (player.bonusCards.length > 0) {
+    const bonRow = document.createElement('div');
+    bonRow.className = 'hand-section';
+    bonRow.style.flexShrink = '0';
+    bonRow.innerHTML = `<label>Bonus / Special</label>`;
+    const bonHand = document.createElement('div');
+    bonHand.className = 'hand';
+    bonHand.style.justifyContent = 'center';
+    for (const c of player.bonusCards) bonHand.appendChild(cardEl(c, 'sm'));
+    bonRow.appendChild(bonHand);
+    area.appendChild(bonRow);
+  }
+
+  // Show Freeze/FlipThree cards received this round
+  if (player.receivedActions && player.receivedActions.length > 0) {
+    const badgeRow = document.createElement('div');
+    badgeRow.className = 'action-badge-row';
+    for (const c of player.receivedActions) {
+      const b = document.createElement('span');
+      b.className = `action-badge ${c.action === 'freeze' ? 'freeze-badge' : 'flipthree-badge'}`;
+      b.textContent = c.action === 'freeze' ? '❄️ FROZEN' : '🔄 FLIP 3 (drew 3 extra)';
+      badgeRow.appendChild(b);
+    }
+    area.appendChild(badgeRow);
+  }
+
+  // Score info
+  // Score info — always visible
+  const infoRow = document.createElement('div');
+  infoRow.className = 'human-info-row';
+  infoRow.innerHTML = `Round score: <strong>${roundScore}</strong> &nbsp;|&nbsp; Bust risk: <strong style="color:${bpPct > 40 ? 'var(--red)' : bpPct > 25 ? '#e67e22' : 'var(--green)'}">${bpPct}%</strong>`;
+  area.appendChild(infoRow);
+
+  // Buttons — always shown, disabled when not actionable
+  const actRow = document.createElement('div');
+  actRow.className = 'actions-row';
+
+  const btnDraw = document.createElement('button');
+  btnDraw.className = 'btn-action btn-draw';
+  btnDraw.textContent = '🃏 Draw';
+  btnDraw.disabled = !canAct;
+  if (canAct) btnDraw.onclick = () => playerDraw();
+
+  const btnStay = document.createElement('button');
+  btnStay.className = 'btn-action btn-stay';
+  btnStay.textContent = '✋ Stay';
+  btnStay.disabled = !canAct || numCards === 0;
+  if (canAct && numCards > 0) btnStay.onclick = () => playerStay();
+
+  actRow.appendChild(btnDraw);
+  actRow.appendChild(btnStay);
+  area.appendChild(actRow);
+
+  return area;
+}
+
+function renderGame() {
+  if (!G) return;
+  document.getElementById('round-info').textContent = `Round ${G.round}`;
+
+  const oppZone = document.getElementById('zone-opponents');
+  const humZone = document.getElementById('zone-human');
+  oppZone.innerHTML = '';
+  humZone.innerHTML = '';
+
+  // Always show human player at bottom; if no human, show current player at bottom
+  const humanIdx = G.players.findIndex(p => p.type === 'human');
+  const mainIdx = humanIdx !== -1 ? humanIdx : G.currentIdx;
+
+  for (let i = 0; i < G.players.length; i++) {
+    if (i !== mainIdx) oppZone.appendChild(renderOpponent(G.players[i]));
+  }
+
+  // Apply state classes to human zone
+  const hp = G.players[mainIdx];
+  const isHumanTurn = hp.id === G.players[G.currentIdx].id;
+  humZone.className = 'zone-human';
+  if (hp.isBusted) humZone.classList.add('busted');
+  else if (hp.isFrozen) humZone.classList.add('frozen');
+  else if (hp.hasStayed) humZone.classList.add('stayed');
+  else if (isHumanTurn && G.phase === 'playing') humZone.classList.add('current-player');
+
+  humZone.appendChild(renderHuman(hp));
+}
+
+// ====================================================================
+//  SETUP UI
+// ====================================================================
+let numPlayers = 3;
+
+function buildSetupRows() {
+  const container = document.getElementById('players-config');
+  container.innerHTML = '';
+  for (let i = 0; i < numPlayers; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <div class="player-avatar pnum" style="background:${PLAYER_COLORS[i]}">${i+1}</div>
+      <input class="pname-input" type="text" value="${PLAYER_NAMES[i]}" placeholder="Name" id="pname-${i}">
+      <select id="ptype-${i}">
+        <option value="human">👤 Human</option>
+        <option value="ai-easy">🤖 AI Easy</option>
+        <option value="ai-normal">🤖 AI Normal</option>
+        <option value="ai-hard">🤖 AI Hard</option>
+      </select>
+    `;
+    container.appendChild(row);
+  }
+  for (let i = 0; i < numPlayers; i++) {
+    const sel = document.getElementById(`ptype-${i}`);
+    sel.value = i === 0 ? 'human' : 'ai-normal';
+  }
+}
+
+document.querySelectorAll('.count-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    numPlayers = parseInt(btn.dataset.count);
+    buildSetupRows();
+  });
+});
+
+document.getElementById('btn-start').addEventListener('click', () => {
+  const playerDefs = [];
+  for (let i = 0; i < numPlayers; i++) {
+    const name = document.getElementById(`pname-${i}`).value.trim() || PLAYER_NAMES[i];
+    const type = document.getElementById(`ptype-${i}`).value;
+    playerDefs.push({ name, type });
+  }
+  document.getElementById('setup-screen').classList.remove('active');
+  document.getElementById('game-screen').classList.add('active');
+  startGame(playerDefs);
+});
+
+// Menu → pause overlay (keeps G intact)
+document.getElementById('btn-menu').addEventListener('click', () => {
+  document.getElementById('pause-overlay').classList.add('visible');
+});
+
+// Resume → hide pause overlay, stay in game
+document.getElementById('btn-resume').addEventListener('click', () => {
+  document.getElementById('pause-overlay').classList.remove('visible');
+  // If it was an AI's turn, restart AI clock
+  if (G && G.phase === 'playing') maybeAI();
+});
+
+// New Game from pause menu
+document.getElementById('btn-new-game-pause').addEventListener('click', () => {
+  document.getElementById('pause-overlay').classList.remove('visible');
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('round-modal').classList.remove('visible');
+  document.getElementById('gameover-modal').classList.remove('visible');
+  document.getElementById('flip7-overlay').classList.remove('visible');
+  document.getElementById('sc-modal').classList.remove('visible');
+  document.getElementById('target-overlay').classList.remove('visible');
+  document.getElementById('setup-screen').classList.add('active');
+  G = null;
+});
+
+document.getElementById('btn-next-round').addEventListener('click', () => {
+  document.getElementById('round-modal').classList.remove('visible');
+  nextRound();
+});
+
+document.getElementById('btn-new-game').addEventListener('click', () => {
+  document.getElementById('gameover-modal').classList.remove('visible');
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('setup-screen').classList.add('active');
+  G = null;
+});
+
+document.getElementById('btn-use-sc').addEventListener('click', () => {
+  document.getElementById('sc-modal').classList.remove('visible');
+  if (!G.scPending) return;
+  const player = G.players.find(p => p.id === G.scPending.playerIdx);
+  useSecondChance(player, G.scPending.card);
+  G.scPending = null; G.phase = 'playing';
+  renderGame();
+  if (isRoundOver()) { endRound(); return; }
+  // If a forced draw is still in progress for this player, resume it
+  if (G.forcedDraw && G.forcedDraw.targetId === player.id) {
+    setTimeout(() => processForcedDraw(), 700);
+  } else if (player.type !== 'human') {
+    setTimeout(() => nextPlayer(), 400);
+  }
+});
+
+document.getElementById('btn-skip-sc').addEventListener('click', () => {
+  document.getElementById('sc-modal').classList.remove('visible');
+  if (!G.scPending) return;
+  const player = G.players.find(p => p.id === G.scPending.playerIdx);
+  player.isBusted = true;
+  setLog(`${player.name} accepted the bust.`);
+  G.forcedDraw = null; // bust ends any forced draw
+  G.scPending = null; G.phase = 'playing';
+  renderGame();
+  if (isRoundOver()) { endRound(); return; }
+  setTimeout(() => nextPlayer(), 600);
+});
+
+// Close pause on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const po = document.getElementById('pause-overlay');
+    if (po.classList.contains('visible')) {
+      po.classList.remove('visible');
+      if (G && G.phase === 'playing') maybeAI();
+    }
+  }
+});
+
+buildSetupRows();
+</script>
+</body>
+</html>
