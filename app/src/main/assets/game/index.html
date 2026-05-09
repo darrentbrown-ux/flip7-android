@@ -22,10 +22,10 @@
   /* Cards scale with viewport — doubled base sizes */
   --card-w: clamp(90px, 8vw, 160px);
   --card-h: clamp(135px, 12vw, 240px);
-  --card-sm-w: clamp(64px, 5.5vw, 110px);
-  --card-sm-h: clamp(96px, 8.25vw, 165px);
-  --card-xs-w: clamp(48px, 4vw, 80px);
-  --card-xs-h: clamp(72px, 6vw, 120px);
+  --card-sm-w: clamp(44px, 5.5vw, 110px);
+  --card-sm-h: clamp(66px, 8.25vw, 165px);
+  --card-xs-w: clamp(32px, 4vw, 80px);
+  --card-xs-h: clamp(48px, 6vw, 120px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
@@ -198,6 +198,29 @@ body {
   min-height: 0;
   overflow: hidden;
 }
+/* Human hand scrolls horizontally so cards never clip on narrow screens */
+.hand-section .hand {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  justify-content: flex-start;
+  align-items: center;
+  padding-bottom: 2px;
+}
+.hand-section .hand::-webkit-scrollbar { display: none; }
+/* Opponent hand: no-wrap + scroll so cards don't get clipped behind panel bounds */
+.player-area .hand {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  justify-content: flex-start;
+  align-items: center;
+}
+.player-area .hand::-webkit-scrollbar { display: none; }
 
 .opp-round-score {
   font-size: clamp(0.65rem, 0.85vw, 0.9rem);
